@@ -12,7 +12,7 @@
 RootModule = 'SystemPathGroups.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.0'
+ModuleVersion = '1.0.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -24,7 +24,7 @@ GUID = 'd8d2308c-cfce-4d87-a4d3-8c32f1f8123c'
 Author = 'Mitch Capper'
 
 # Company or vendor of this module
-CompanyName = 'Unknown'
+# CompanyName = 'Unknown'
 
 # Copyright statement for this module
 Copyright = '(c) Mitch Capper. All rights reserved.'
@@ -98,10 +98,10 @@ PrivateData = @{
         Tags = @('Path', 'Environment', 'System', 'PathManagement')
 
         # A URL to the license for this module.
-        # LicenseUri = 'https://github.com/mitchcapper/SystemPathGroups'
+        LicenseUri = 'https://github.com/mitchcapper/SystemPathGroups'
 
         # A URL to the main website for this project.
-        # ProjectUri = 'https://github.com/mitchcapper/SystemPathGroups'
+        ProjectUri = 'https://github.com/mitchcapper/SystemPathGroups'
 
         # A URL to an icon representing this module.
         # IconUri = ''
