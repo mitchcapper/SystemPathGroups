@@ -1,4 +1,5 @@
 name: Build and Test
+
 on:
   push:
     branches-ignore:
@@ -16,85 +17,29 @@ jobs:
       
       - name: Install Pester
         shell: pwsh
-        run: |
-          Install-Module -Name Pester -RequiredVersion 5.3.3 -Force -SkipPublisherCheck
-          Import-Module Pester -RequiredVersion 5.3.3
+        run: Install-Module -Name Pester -Force -SkipPublisherCheck
 
-      - name: Build README
+      - name: Build and Display README
         shell: pwsh
         run: |
-          # Ensure module can be imported
-          $ErrorActionPreference = 'Stop'
-          try {
-            # Build the readme
-            ./Build-Readme.ps1
-            if (-not (Test-Path README.md)) {
-              throw "README.md was not generated"
-            }
-          } catch {
-            Write-Error "Failed to build README: $_"
-            exit 1
-          }
-
-      - name: Display README in Job Summary
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const readme = fs.readFileSync('README.md', 'utf8');
-            await core.summary
-              .addRaw('## README Preview\n\n')
-              .addRaw(readme)
-              .write();
+          ./Build-Readme.ps1
+          $readme = Get-Content README.md -Raw
+          "::group::Generated README"
+          $readme
+          "::endgroup::"
 
       - name: Run Tests
         shell: pwsh
-        run: |
-          Import-Module Pester -RequiredVersion 5.3.3
-          $config = New-PesterConfiguration
-          $config.Run.Path = "./tests"
-          $config.TestResult.Enabled = $true
-          $config.TestResult.OutputPath = "test-results.xml"
-          $config.TestResult.OutputFormat = "NUnit3"
-          $config.Output.Verbosity = "Detailed"
-          $result = Invoke-Pester -Configuration $config -PassThru
-          if ($result.FailedCount -gt 0) {
-            Write-Error "Pester tests failed"
-            exit 1
-          }
-        
-      - name: Publish Test Results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: PowerShell Tests
-          path: test-results.xml
-          reporter: dotnet-trx
-          fail-on-error: true
-        
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: test-results.xml
+        run: Invoke-Pester "./tests" -Output Detailed
 
-      - name: Package Module
+      - name: Package and Upload
         shell: pwsh
         run: |
-          # Create package directory
-          $packageDir = "package"
-          New-Item -ItemType Directory -Path $packageDir
-          
-          # Copy module files
-          Copy-Item -Path "./SystemPathGroups" -Destination "$packageDir/SystemPathGroups" -Recurse
-          Copy-Item -Path "README.md" -Destination "$packageDir"
-          
-          # Create zip archive
-          Compress-Archive -Path "$packageDir/*" -DestinationPath "SystemPathGroups.zip"
+          New-Item -ItemType Directory -Path package -Force
+          Copy-Item -Path "./SystemPathGroups","README.md" -Destination package -Recurse
+          Compress-Archive -Path "package/*" -DestinationPath "SystemPathGroups.zip"
 
-      - name: Upload Package
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: SystemPathGroups
           path: SystemPathGroups.zip
