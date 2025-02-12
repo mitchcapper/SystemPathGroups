@@ -4,11 +4,17 @@ Import-Module -Name "$PSScriptRoot\..\SystemPathGroups" -Verbose -Force
 
 InModuleScope SystemPathGroups {
     BeforeAll {
+        # Remove any existing test results file
+        $testResultsPath = "$PSScriptRoot\..\test-results.xml"
+        if (Test-Path $testResultsPath) {
+            Remove-Item $testResultsPath -Force
+        }
+
         # Ensure consistent test output for CI
         $PesterPreference = [PesterConfiguration]::Default
         $PesterPreference.Output.Verbosity = 'Detailed'
         $PesterPreference.TestResult.Enabled = $true
-        $PesterPreference.TestResult.OutputFormat = 'NUnit2.5'  # Match workflow configuration
+        $PesterPreference.TestResult.OutputFormat = 'JUnitXml'  # Match workflow configuration
     
         $script:PathsFile = Join-Path ([System.IO.Path]::GetTempPath()) "SystemPathGroups_test.json"
         $script:EnvTarget = [System.EnvironmentVariableTarget]::Process

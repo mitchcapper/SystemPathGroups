@@ -1,14 +1,17 @@
 name: Build and Test
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+  security-events: write
+
 on:
   push:
     branches-ignore:
       - trash
-  pull_request:
-    branches:
-      - main
-      - master
-
+  
 jobs:
   build:
     runs-on: windows-latest
@@ -30,7 +33,20 @@ jobs:
 
       - name: Run Tests
         shell: pwsh
-        run: Invoke-Pester "./tests" -Output Detailed
+        run: |
+          
+          # Run the tests using our pester.tests.ps1
+          & "$PWD\tests\pester.tests.ps1"
+
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: PowerShell Tests
+          path: test-results.xml
+          reporter: jest-junit
+          fail-on-error: true
 
       - name: Package and Upload
         shell: pwsh

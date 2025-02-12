@@ -1,3 +1,12 @@
 Import-Module Pester
 Set-Location -Path $PSScriptRoot
-Invoke-Pester './SystemPathGroups.Tests.ps1' -Output Detailed
+
+# Use same configuration as GitHub Actions workflow
+$config = New-PesterConfiguration
+$config.Run.Path = './SystemPathGroups.Tests.ps1'
+$config.TestResult.Enabled = $true
+$config.TestResult.OutputPath = "$PSScriptRoot\..\test-results.xml"
+$config.TestResult.OutputFormat = "JUnitXml"
+$config.Output.Verbosity = "Detailed"
+
+Invoke-Pester -Configuration $config
