@@ -1,0 +1,73 @@
+name: Build and Test
+on:
+  push:
+    branches-ignore:
+      - trash
+
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -Force -SkipPublisherCheck
+          Import-Module Pester
+
+      - name: Build README
+        shell: pwsh
+        run: |
+          # Build the readme
+          ./Build-Readme.ps1
+
+      - name: Display README in Job Summary
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const readme = fs.readFileSync('README.md', 'utf8');
+            await core.summary
+              .addRaw('## README Preview\n\n')
+              .addRaw(readme)
+              .write();
+
+      - name: Run Tests
+        shell: pwsh
+        run: |
+          $config = [PesterConfiguration]::Default
+          $config.Run.Path = "./tests"
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputPath = "test-results.xml"
+          $config.TestResult.OutputFormat = "NUnit3"
+          $config.Output.Verbosity = "Detailed"
+          Invoke-Pester -Configuration $config
+        
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test-results.xml
+
+      - name: Package Module
+        shell: pwsh
+        run: |
+          # Create package directory
+          $packageDir = "package"
+          New-Item -ItemType Directory -Path $packageDir
+          
+          # Copy module files
+          Copy-Item -Path "./SystemPathGroups" -Destination "$packageDir/SystemPathGroups" -Recurse
+          Copy-Item -Path "README.md" -Destination "$packageDir"
+          
+          # Create zip archive
+          Compress-Archive -Path "$packageDir/*" -DestinationPath "SystemPathGroups.zip"
+
+      - name: Upload Package
+        uses: actions/upload-artifact@v3
+        with:
+          name: SystemPathGroups
+          path: SystemPathGroups.zip
