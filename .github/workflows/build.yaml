@@ -27,10 +27,7 @@ jobs:
         run: |
           ./Build-Readme.ps1
           $readme = Get-Content README.md -Raw
-          "::group::Generated README"
-          $readme
-          "::endgroup::"
-
+          echo $readme >> $env:GITHUB_STEP_SUMMARY
       - name: Run Tests
         shell: pwsh
         run: |
